@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="RACKFORGE LIVE — demo rack UI for the Allen & Heath SQ-6" />
+    <title>RACKFORGE LIVE</title>
+    <style>
+      :root {
+        --bg: #0a1119;
+        --bg-2: #0f1720;
+        --panel: #121d28;
+        --panel-2: #171f2a;
+        --panel-3: #1d2835;
+        --line: #2a3947;
+        --line-soft: rgba(255,255,255,0.08);
+        --text: #edf4ff;
+        --muted: #9db0c0;
+        --blue: #5aa9ff;
+        --blue-2: #2d74db;
+        --green: #5ad4a2;
+        --amber: #f7c76b;
+        --red: #f26f6f;
+        --shadow: rgba(0,0,0,0.28);
+      }
+
+      * { box-sizing: border-box; }
+      html, body {
+        margin: 0;
+        min-height: 100%;
+        background: linear-gradient(180deg, #0b1118 0%, #0d1218 100%);
+        color: var(--text);
+        font-family: Inter, "Segoe UI", Arial, sans-serif;
+      }
+      body {
+        min-height: 100vh;
+      }
+      button, input {
+        font: inherit;
+      }
+      button { cursor: pointer; }
+
+      .shell {
+        max-width: 1560px;
+        margin: 22px auto;
+        padding: 0 18px 28px;
+      }
+
+      .topbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 18px 22px;
+        border: 1px solid var(--line);
+        background: rgba(17, 27, 36, 0.96);
+        border-radius: 18px;
+        box-shadow: 0 14px 30px var(--shadow);
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+      }
+      .brand-mark {
+        width: 42px;
+        height: 42px;
+        border-radius: 12px;
+        display: grid;
+        place-items: center;
+        font-weight: 900;
+        letter-spacing: 0.08em;
+        background: linear-gradient(135deg, #2d6ed6, #4cdbb4);
+        color: #04131d;
+      }
+      .brand-name {
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        font-size: 1.15rem;
+      }
+      .brand-sub {
+        color: var(--muted);
+        font-size: 0.74rem;
+      }
+
+      .top-actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+      .btn {
+        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 10px;
+        background: linear-gradient(180deg, var(--blue), var(--blue-2));
+        color: white;
+        font-weight: 700;
+        border: none;
+        padding: 10px 16px;
+        box-shadow: 0 10px 18px rgba(90,169,255,0.25);
+      }
+      .btn.secondary {
+        background: rgba(255,255,255,0.03);
+        border: 1px solid var(--line);
+        box-shadow: none;
+      }
+      .btn.small {
+        font-size: 0.78rem;
+        padding: 8px 12px;
+      }
+
+      .layout {
+        margin-top: 20px;
+        display: grid;
+        grid-template-columns: 320px minmax(0, 1.5fr) 320px;
+        gap: 20px;
+      }
+
+      .panel {
+        background: rgba(18, 29, 40, 0.95);
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        box-shadow: 0 12px 26px var(--shadow);
+      }
+
+      .sidebar, .right-rail { padding: 14px 14px 16px; }
+      .main { padding: 14px; }
+
+      .section-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        margin-bottom: 12px;
+        font-weight: 700;
+      }
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        height: 24px;
+        padding: 0 8px;
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        color: var(--muted);
+        background: rgba(255,255,255,0.02);
+        font-size: 0.68rem;
+      }
+
+      .module-list {
+        display: flex;
+        flex-direction: column;
+        gap: 9px;
+      }
+      .module-row {
+        display: grid;
+        grid-template-columns: 42px 1fr auto;
+        gap: 10px;
+        width: 100%;
+        background: rgba(255,255,255,0.02);
+        border: 1px solid var(--line);
+        color: white;
+        border-radius: 12px;
+        padding: 9px 9px;
+        text-align: left;
+        transition: border-color .15s ease, transform .15s ease;
+      }
+      .module-row:hover {
+        border-color: rgba(90,169,255,0.7);
+      }
+      .module-row.active {
+        border-color: rgba(90,169,255,0.8);
+        background: rgba(90,169,255,0.08);
+      }
+      .mini-icon {
+        width: 42px;
+        height: 42px;
+        border-radius: 9px;
+        display: grid;
+        place-items: center;
+        font-size: 0.72rem;
+        font-weight: 800;
+        background: linear-gradient(135deg, rgba(90,169,255,0.25), rgba(90,212,162,0.14));
+        border: 1px solid rgba(255,255,255,0.08);
+      }
+      .module-meta {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 2px;
+      }
+      .module-meta strong { font-size: 0.93rem; }
+      .module-meta span { color: var(--muted); font-size: 0.7rem; }
+      .status-pill {
+        align-self: center;
+        font-size: 0.62rem;
+        padding: 5px 7px;
+        border-radius: 999px;
+        border: 1px solid rgba(255,255,255,0.08);
+        white-space: nowrap;
+      }
+      .status-good { background: rgba(90,212,162,0.12); color: var(--green); }
+      .status-warn { background: rgba(247,199,107,0.12); color: var(--amber); }
+      .status-info { background: rgba(90,169,255,0.12); color: var(--blue); }
+
+      .rack-board {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+      }
+      .rack-card {
+        background: linear-gradient(180deg, rgba(28, 38, 49, 0.95), rgba(18, 25, 32, 0.98));
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        padding: 12px;
+        min-height: 220px;
+      }
+      .rack-card-header {
+        display: flex;
+        gap: 10px;
+        align-items: flex-start;
+        margin-bottom: 10px;
+      }
+      .small-icon {
+        width: 34px;
+        height: 34px;
+        display: grid;
+        place-items: center;
+        border-radius: 8px;
+        font-size: 0.66rem;
+        font-weight: 800;
+        background: linear-gradient(135deg, rgba(90,169,255,0.25), rgba(90,212,162,0.15));
+        border: 1px solid rgba(255,255,255,0.08);
+      }
+      .rack-title { font-weight: 700; font-size: 0.96rem; }
+      .rack-summary {
+        color: var(--muted);
+        font-size: 0.68rem;
+        margin-top: 4px;
+        line-height: 1.35;
+      }
+      .rack-tools { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; }
+      .toggle {
+        position: relative;
+        width: 42px;
+        height: 22px;
+        display: inline-block;
+      }
+      .toggle input { opacity: 0; width: 0; height: 0; }
+      .slider {
+        position: absolute; inset: 0;
+        border-radius: 999px;
+        background: rgba(255,255,255,0.08);
+        border: 1px solid var(--line);
+        transition: .18s ease;
+      }
+      .slider:before {
+        content: "";
+        position: absolute;
+        width: 14px;
+        height: 14px;
+        left: 4px;
+        top: 3px;
+        border-radius: 50%;
+        background: white;
+        transition: .18s ease;
+      }
+      .toggle input:checked + .slider { background: rgba(90,212,162,0.28); }
+      .toggle input:checked + .slider:before { transform: translateX(20px); }
+      .mini-btn {
+        border: 1px solid var(--line);
+        background: rgba(255,255,255,0.03);
+        color: var(--text);
+        padding: 7px 10px;
+        border-radius: 8px;
+        font-size: 0.68rem;
+      }
+      .mini-btn.alt { background: rgba(90,169,255,0.08); }
+
+      .meter-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin-bottom: 10px;
+      }
+      .meter-block {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        font-size: 0.68rem;
+        color: var(--muted);
+      }
+      .meter {
+        position: relative;
+        height: 10px;
+        border-radius: 999px;
+        overflow: hidden;
+        border: 1px solid var(--line);
+        background: rgba(255,255,255,0.03);
+      }
+      .meter > span {
+        position: absolute;
+        inset: 0 auto 0 0;
+        border-radius: inherit;
+        background: linear-gradient(90deg, var(--green), var(--blue));
+      }
+      .meter.out > span { background: linear-gradient(90deg, var(--amber), var(--red)); }
+
+      .p-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+      }
+      .p-box {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        color: var(--muted);
+        font-size: 0.7rem;
+      }
+      .p-box input[type="range"] {
+        width: 100%;
+        accent-color: var(--blue);
+      }
+      .p-box strong {
+        color: var(--text);
+        font-size: 0.72rem;
+      }
+
+      .detail-card {
+        margin-top: 12px;
+        border: 1px solid var(--line);
+        background: rgba(9, 15, 21, 0.74);
+        border-radius: 14px;
+        padding: 16px;
+      }
+      .detail-head {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        margin-bottom: 16px;
+      }
+      .detail-head h2 {
+        margin: 0;
+        font-size: 1.5rem;
+      }
+      .detail-head p {
+        margin: 6px 0 0;
+        color: var(--muted);
+        line-height: 1.5;
+      }
+      .detail-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+      }
+      .detail-grid .p-box {
+        background: rgba(255,255,255,0.02);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 10px;
+      }
+      .action-row {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-top: 16px;
+      }
+
+      .info-box {
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: rgba(255,255,255,0.02);
+        padding: 12px;
+      }
+      .info-box h3 { margin: 0 0 8px; }
+      .info-box p {
+        margin: 0 0 12px;
+        color: var(--muted);
+        line-height: 1.45;
+      }
+
+      .route-list, .status-list {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .route-item, .status-item {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid var(--line);
+      }
+      .route-item span, .status-item span { color: var(--muted); }
+      .status-good-text { color: var(--green); }
+      .status-warn-text { color: var(--amber); }
+      .status-info-text { color: var(--blue); }
+
+      .preset-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      .preset {
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: rgba(255,255,255,0.02);
+        color: var(--text);
+        padding: 8px 10px;
+        font-size: 0.7rem;
+      }
+      .preset.active {
+        border-color: rgba(90,169,255,0.75);
+        background: rgba(90,169,255,0.12);
+      }
+
+      @media (max-width: 1180px) {
+        .layout { grid-template-columns: 1fr; }
+      }
+
+      @media (max-width: 700px) {
+        .rack-board, .detail-grid, .p-grid { grid-template-columns: 1fr; }
+        .topbar { flex-direction: column; gap: 14px; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <header class="topbar">
+        <div class="brand">
+          <div class="brand-mark">RF</div>
+          <div>
+            <div class="brand-name">RACKFORGE LIVE</div>
+            <div class="brand-sub">External audio processing rack for the Allen &amp; Heath SQ-6</div>
+          </div>
+        </div>
+        <div class="top-actions">
+          <button class="btn secondary small" id="demoModeBtn">Demo Mode</button>
+          <button class="btn small" id="engineModeBtn">Engine Test</button>
+        </div>
+      </header>
+
+      <div class="layout">
+        <aside class="panel sidebar">
+          <div class="section-head">
+            <span>Plugin Browser</span>
+            <span class="badge">14 modules</span>
+          </div>
+          <div id="moduleList" class="module-list"></div>
+        </aside>
+
+        <main class="main">
+          <section class="panel main" style="padding: 14px;">
+            <div class="section-head">
+              <span>Main Rack</span>
+              <span class="badge">Professional studio layout</span>
+            </div>
+            <div id="rackGrid" class="rack-board"></div>
+          </section>
+
+          <section class="panel" style="margin-top: 18px; padding: 14px;">
+            <div class="section-head">
+              <span>Plugin Detail</span>
+              <span class="badge" id="detailBadge">Demo Ready</span>
+            </div>
+            <div id="detailCard" class="detail-card"></div>
+          </section>
+        </main>
+
+        <aside class="panel right-rail">
+          <div class="section-head">
+            <span>Live Demonstrations</span>
+          </div>
+          <div class="info-box">
+            <h3>Demonstration Mode</h3>
+            <p>This public version is a demo-safe rack interface. It does not claim live SQ-6 hardware connectivity or real audio processing unless the local engine is running on the user’s computer.</p>
+            <button class="btn small">Run Demo</button>
+          </div>
+
+          <div class="section-head" style="margin-top: 16px;">
+            <span>Audio Routing</span>
+          </div>
+          <div class="route-list">
+            <div class="route-item"><span>USB Input</span><strong>SQ-6 USB 1/2</strong></div>
+            <div class="route-item"><span>Processing</span><strong>Selected rack chain</strong></div>
+            <div class="route-item"><span>Return</span><strong>STEREO OUT</strong></div>
+          </div>
+
+          <div class="section-head" style="margin-top: 18px;">
+            <span>SQ-6 Connection</span>
+          </div>
+          <div class="status-list" id="connectionStatus"></div>
+
+          <div class="section-head" style="margin-top: 18px;">
+            <span>Presets</span>
+          </div>
+          <div class="preset-list">
+            <button class="preset active">Clean Vocal</button>
+            <button class="preset">Punch Bus</button>
+            <button class="preset">Plate Drift</button>
+            <button class="preset">Feedback Safe</button>
+          </div>
+        </aside>
+      </div>
+    </div>
+
+    <script>
+      const modules = [
+        { id:'preamp-tone', label:'PRE', name:'Preamp Tone', category:'Tone', status:'Demo Ready', description:'Harmonic saturation and tonal shaping.', params:[
+          {name:'Drive', value:52, min:0, max:100, unit:'%'},
+          {name:'Tone', value:63, min:0, max:100, unit:'%'},
+          {name:'Mix', value:68, min:0, max:100, unit:'%'},
+          {name:'Output', value:4.2, min:-12, max:12, unit:'dB'}
+        ] },
+        { id:'transient-shaper', label:'TRS', name:'Transient Shaper', category:'Dynamics', status:'Demo Ready', description:'Adds snap, attack, and controlled sustain.', params:[
+          {name:'Attack', value:58, min:0, max:100, unit:'%'},
+          {name:'Sustain', value:46, min:0, max:100, unit:'%'},
+          {name:'Sensitivity', value:61, min:0, max:100, unit:'%'},
+          {name:'Output', value:2.8, min:-12, max:12, unit:'dB'}
+        ] },
+        { id:'dynamic-eq', label:'DYN', name:'Dynamic EQ', category:'Dynamics', status:'Local DSP Required', description:'Responsive equalization based on signal energy.', params:[
+          {name:'Frequency', value:1800, min:200, max:8000, unit:'Hz'},
+          {name:'Q', value:2.8, min:0.3, max:8, unit:'Q'},
+          {name:'Threshold', value:-8, min:-30, max:12, unit:'dB'},
+          {name:'Range', value:7.2, min:1, max:18, unit:'dB'}
+        ] },
+        { id:'de-esser', label:'ESS', name:'De-Esser', category:'Dynamics', status:'Demo Ready', description:'Reduces excessive sibilance and harshness.', params:[
+          {name:'Frequency', value:6500, min:2000, max:16000, unit:'Hz'},
+          {name:'Threshold', value:-16, min:-30, max:0, unit:'dB'},
+          {name:'Reduction', value:8.4, min:1, max:18, unit:'dB'},
+          {name:'Mix', value:72, min:0, max:100, unit:'%'}
+        ] },
+        { id:'vocal-rider', label:'RDR', name:'Vocal Rider', category:'Dynamics', status:'Local DSP Required', description:'Keeps vocal level stable within a target range.', params:[
+          {name:'Target', value:-12, min:-24, max:0, unit:'dB'},
+          {name:'Sensitivity', value:62, min:0, max:100, unit:'%'},
+          {name:'Max Gain', value:4.5, min:0, max:12, unit:'dB'},
+          {name:'Response', value:140, min:20, max:500, unit:'ms'}
+        ] },
+        { id:'feedback-guard', label:'FBG', name:'Feedback Guard', category:'Utility', status:'Local DSP Required', description:'Focused attenuation for narrow-band feedback peaks.', params:[
+          {name:'Sensitivity', value:68, min:0, max:100, unit:'%'},
+          {name:'Hold', value:140, min:20, max:500, unit:'ms'},
+          {name:'Cut', value:8.5, min:1, max:18, unit:'dB'},
+          {name:'Link', value:36, min:0, max:100, unit:'%'}
+        ] },
+        { id:'multiband-compressor', label:'MBC', name:'Multiband Compressor', category:'Dynamics', status:'Local DSP Required', description:'Independent control across low, mid, and high bands.', params:[
+          {name:'Low Thr', value:-12, min:-30, max:0, unit:'dB'},
+          {name:'Mid Thr', value:-10, min:-30, max:0, unit:'dB'},
+          {name:'High Thr', value:-8, min:-30, max:0, unit:'dB'},
+          {name:'Attack', value:24, min:5, max:100, unit:'ms'}
+        ] },
+        { id:'tape-saturation', label:'TAP', name:'Tape Saturation', category:'Tone', status:'Demo Ready', description:'Smooth harmonic color and saturation texture.', params:[
+          {name:'Drive', value:52, min:0, max:100, unit:'%'},
+          {name:'Character', value:63, min:0, max:100, unit:'%'},
+          {name:'Tone', value:58, min:0, max:100, unit:'%'},
+          {name:'Mix', value:73, min:0, max:100, unit:'%'}
+        ] },
+        { id:'stereo-width', label:'WID', name:'Stereo Width', category:'Spatial', status:'Demo Ready', description:'Widen or focus the stereo image while staying practical.', params:[
+          {name:'Width', value:72, min:-100, max:200, unit:'%'},
+          {name:'Mid Gain', value:2.2, min:-12, max:12, unit:'dB'},
+          {name:'Side Gain', value:4.8, min:-12, max:12, unit:'dB'},
+          {name:'Output', value:1.4, min:-12, max:12, unit:'dB'}
+        ] },
+        { id:'punch-bus', label:'PCH', name:'Punch Bus', category:'Dynamics', status:'Local DSP Required', description:'Bus compression for punch, energy, and consistency.', params:[
+          {name:'Threshold', value:-12, min:-30, max:0, unit:'dB'},
+          {name:'Ratio', value:3.4, min:1, max:10, unit:':'},
+          {name:'Attack', value:16, min:2, max:120, unit:'ms'},
+          {name:'Makeup', value:2.6, min:-12, max:18, unit:'dB'}
+        ] },
+        { id:'plate-reverb', label:'PLT', name:'Plate Reverb', category:'Reverb', status:'Local DSP Required', description:'Dense ambience with decay, diffusion, and depth.', params:[
+          {name:'Pre-Delay', value:26, min:0, max:120, unit:'ms'},
+          {name:'Decay', value:3.8, min:0.5, max:12, unit:'s'},
+          {name:'Damping', value:66, min:0, max:100, unit:'%'},
+          {name:'Mix', value:28, min:0, max:100, unit:'%'}
+        ] },
+        { id:'tempo-delay', label:'DLY', name:'Tempo Delay', category:'Modulation', status:'Demo Ready', description:'Musical echo with sync and rhythmic subdivisions.', params:[
+          {name:'Time', value:360, min:20, max:2000, unit:'ms'},
+          {name:'Feedback', value:42, min:0, max:95, unit:'%'},
+          {name:'Offset', value:18, min:-100, max:100, unit:'%'},
+          {name:'Mix', value:35, min:0, max:100, unit:'%'}
+        ] },
+        { id:'loudness-guard', label:'LGD', name:'Loudness Guard', category:'Utility', status:'Local DSP Required', description:'Final peak limiting and loudness protection.', params:[
+          {name:'Threshold', value:-1.5, min:-12, max:0, unit:'dB'},
+          {name:'Ceiling', value:-1.0, min:-6, max:0, unit:'dB'},
+          {name:'Release', value:72, min:10, max:200, unit:'ms'},
+          {name:'Input', value:1.7, min:-12, max:12, unit:'dB'}
+        ] },
+        { id:'vocal-tune', label:'VTL', name:'Vocal Tune', category:'Pitch', status:'Hardware Dependent', description:'Real-time pitch correction with scale-aware retuning.', params:[
+          {name:'Key', value:5, min:0, max:11, unit:'note'},
+          {name:'Strength', value:62, min:0, max:100, unit:'%'},
+          {name:'Humanise', value:38, min:0, max:100, unit:'%'},
+          {name:'Mix', value:70, min:0, max:100, unit:'%'}
+        ] }
+      ];
+
+      const statusClassMap = {
+        'Demo Ready': 'status-good',
+        'Local DSP Required': 'status-warn',
+        'Hardware Dependent': 'status-info'
+      };
+
+      const moduleState = {};
+      modules.forEach((m) => {
+        moduleState[m.id] = m.params.map((p) => p.value);
+      });
+
+      let selectedModuleId = modules[0].id;
+
+      function setSelected(id) {
+        selectedModuleId = id;
+        renderAll();
+      }
+
+      function updateParam(moduleId, index, newValue) {
+        moduleState[moduleId][index] = Number(newValue);
+        renderAll();
+      }
+
+      function getStatusText(status) {
+        return status === 'Demo Ready' ? 'demo' : status === 'Local DSP Required' ? 'requires local engine' : 'hardware dependent';
+      }
+
+      function renderModuleList() {
+        const list = document.getElementById('moduleList');
+        list.innerHTML = modules.map(module => `
+          <button class="module-row ${module.id === selectedModuleId ? 'active' : ''}" data-id="${module.id}" type="button">
+            <div class="mini-icon">${module.label}</div>
+            <div class="module-meta">
+              <strong>${module.name}</strong>
+              <span>${module.category}</span>
+            </div>
+            <span class="status-pill ${statusClassMap[module.status]}">${module.status}</span>
+          </button>
+        `).join('');
+
+        list.querySelectorAll('.module-row').forEach(button => {
+          button.addEventListener('click', () => setSelected(button.dataset.id));
+        });
+      }
+
+      function renderRack() {
+        const rack = document.getElementById('rackGrid');
+        rack.innerHTML = modules.map((module) => {
+          const values = moduleState[module.id];
+          const firstTwo = module.params.slice(0, 2).map((param, i) => `
+            <label class="p-box">
+              <span>${param.name}</span>
+              <input type="range" min="${param.min}" max="${param.max}" step="${param.min < 1 ? 0.1 : 1}" value="${values[i]}" data-module="${module.id}" data-index="${i}" />
+              <strong>${values[i]}${param.unit}</strong>
+            </label>
+          `).join('');
+
+          return `
+            <div class="rack-card" data-id="${module.id}">
+              <div class="rack-card-header">
+                <div class="small-icon">${module.label}</div>
+                <div>
+                  <div class="rack-title">${module.name}</div>
+                  <div class="rack-summary">${module.description}</div>
+                </div>
+              </div>
+
+              <div class="rack-tools">
+                <label class="toggle">
+                  <input type="checkbox" checked />
+                  <span class="slider"></span>
+                </label>
+                <button type="button" class="mini-btn">Bypass</button>
+                <button type="button" class="mini-btn alt">Watch Demo</button>
+              </div>
+
+              <div class="meter-row">
+                <div class="meter-block">
+                  <span>In</span>
+                  <div class="meter"><span style="width: 68%"></span></div>
+                </div>
+                <div class="meter-block">
+                  <span>Out</span>
+                  <div class="meter out"><span style="width: 58%"></span></div>
+                </div>
+              </div>
+
+              <div class="p-grid">${firstTwo}</div>
+            </div>
+          `;
+        }).join('');
+
+        rack.querySelectorAll('input[type="range"]').forEach((slider) => {
+          slider.addEventListener('input', (e) => {
+            const target = e.target;
+            const moduleId = target.dataset.module;
+            const index = Number(target.dataset.index);
+            updateParam(moduleId, index, target.value);
+          });
+        });
+
+        rack.querySelectorAll('.rack-card').forEach((card) => {
+          card.addEventListener('click', () => setSelected(card.dataset.id));
+        });
+      }
+
+      function renderDetail() {
+        const module = modules.find(m => m.id === selectedModuleId) || modules[0];
+        const detail = document.getElementById('detailCard');
+        const badge = document.getElementById('detailBadge');
+        badge.textContent = module.status;
+
+        const params = module.params.map((param, index) => {
+          const value = moduleState[module.id][index];
+          return `
+            <label class="p-box">
+              <span>${param.name}</span>
+              <input type="range" min="${param.min}" max="${param.max}" step="${param.min < 1 ? 0.1 : 1}" value="${value}" data-module="${module.id}" data-index="${index}" />
+              <strong>${value}${param.unit}</strong>
+            </label>
+          `;
+        }).join('');
+
+        detail.innerHTML = `
+          <div class="detail-head">
+            <div class="brand-mark" style="width:32px;height:32px;border-radius:8px;font-size:0.72rem;">${module.label}</div>
+            <div>
+              <h2>${module.name}</h2>
+              <p>${module.description}</p>
+            </div>
+          </div>
+          <div class="detail-grid">${params}</div>
+          <div class="action-row">
+            <button class="btn secondary">Reset</button>
+            <button class="btn secondary">A/B Compare</button>
+            <button class="btn secondary">Save Preset</button>
+          </div>
+        `;
+
+        detail.querySelectorAll('input[type="range"]').forEach((slider) => {
+          slider.addEventListener('input', (e) => {
+            const target = e.target;
+            updateParam(target.dataset.module, Number(target.dataset.index), target.value);
+          });
+        });
+      }
+
+      function renderConnectionStatus() {
+        const wrap = document.getElementById('connectionStatus');
+        const items = [
+          ['SQ-6 USB audio', 'Not connected', 'warn'],
+          ['Audio engine', 'Demo Mode', 'info'],
+          ['Signal path', 'Demonstration only', 'warn'],
+          ['Latency', 'n/a', 'info'],
+          ['CPU', 'Simulated', 'info']
+        ];
+        wrap.innerHTML = items.map(([label, value, tone]) => `
+          <div class="status-item">
+            <span>${label}</span>
+            <strong class="status-${tone}-text">${value}</strong>
+          </div>
+        `).join('');
+      }
+
+      function renderAll() {
+        renderModuleList();
+        renderRack();
+        renderDetail();
+        renderConnectionStatus();
+      }
+
+      document.getElementById('demoModeBtn').addEventListener('click', () => {
+        document.getElementById('engineModeBtn').textContent = 'Engine Test';
+      });
+
+      document.getElementById('engineModeBtn').addEventListener('click', () => {
+        document.getElementById('engineModeBtn').textContent = 'Engine Active';
+      });
+
+      document.querySelectorAll('.preset').forEach((preset) => {
+        preset.addEventListener('click', () => {
+          document.querySelectorAll('.preset').forEach(p => p.classList.remove('active'));
+          preset.classList.add('active');
+        });
+      });
+
+      renderAll();
+    </script>
+  </body>
+</html>
